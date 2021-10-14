@@ -1968,15 +1968,27 @@ public final class DirectPostingsFormat extends PostingsFormat {
       // if (DEBUG) {
       //   System.out.println("advance target=" + target + " len=" + docIDs.length);
       // }
+
+      //TODO: Adi: Check this works. Change from 10->2 optimises advance for when we just want the next docID
+      // Somewhere higher in the abstraction layers (something to do with ImpactsDISI and SlowImpactsEnum
+      // advance is called but the implementation used here wastes computation (explained below) if we just want nextDoc()
+
+      // In current implementation, doing a simple singleTermQuery has the following code execute:
+      // ImpactsDISI.nextDoc() --> ImpactsDISI.advance(in.docID() + 1) --> SlowImpactsEnum.advance(target) --> DirectPostingsFormat.advance(target)
+      // This function is slower than calling DirectPostingsFormat.nextDoc() when that was the intention all along (since DirectPostingsFormat does not implement skipping)
+
+      if (target == docID + 1) {
+        return nextDoc();
+      }
+
       upto++;
       if (upto == docIDs.length) {
         return docID = NO_MORE_DOCS;
       }
-
       // First "grow" outwards, since most advances are to
       // nearby docs:
       int inc = 10;
-      int nextUpto = upto+10;
+      int nextUpto = upto+inc;
       int low;
       int high;
       while (true) {

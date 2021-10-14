@@ -259,6 +259,10 @@ public final class Lucene84PostingsReader extends PostingsReaderBase {
 
   @Override
   public ImpactsEnum impacts(FieldInfo fieldInfo, BlockTermState state, int flags) throws IOException {
+    // Adi: Always return SlowImpactsEnum. This might break horrendously
+    boolean TRUE = true;
+    if (TRUE)
+      return new SlowImpactsEnum(postings(fieldInfo, state, null, flags));
     if (state.docFreq <= BLOCK_SIZE) {
       // no skip data
       return new SlowImpactsEnum(postings(fieldInfo, state, null, flags));
